@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProPing Monitor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar for Configuration -->
+        <div class="sidebar" id="sidebar">
+            <button class="toggle-btn" id="toggleBtn">☰</button>
+            <div class="sidebar-content">
+                <h2>Targets</h2>
+                <div class="input-group">
+                    <input type="text" id="targetName" placeholder="Name (e.g. Google DNS)">
+                    <input type="text" id="targetIp" placeholder="IP / Host (e.g. 8.8.8.8)">
+                    <button class="add-btn" id="addBtn">ADD TARGET</button>
+                </div>
+
+                <div class="target-list" id="targetList">
+                    <!-- List items go here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard" id="dashboard">
+            <!-- Ping Cards go here -->
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+
+</html>
