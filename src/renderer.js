@@ -10,6 +10,7 @@ const dashboardEl = document.getElementById('dashboard');
 const toggleBtn = document.getElementById('toggleBtn');
 const sidebar = document.getElementById('sidebar');
 const logEntriesEl = document.getElementById('logEntries');
+const activityLogEl = document.getElementById('activityLog'); // Main container
 
 // Sidebar Toggle
 toggleBtn.addEventListener('click', () => {
@@ -76,6 +77,9 @@ function renderDashboard() {
             card = document.createElement('div');
             card.id = `card-${target.id}`;
             card.className = 'ping-card';
+            // Attach click listener for selection
+            card.onclick = () => selectTarget(target.id);
+
             card.innerHTML = `
                 <div class="card-header">
                     <span class="card-title">${target.name}</span>
@@ -104,11 +108,11 @@ function renderDashboard() {
 
 // IPC Listeners & Logic
 const prevStatuses = {}; // Track previous state
+let selectedTargetId = null; // Track selected target for filtering
 
 // Create a simple Beep using AudioContext
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playBeep() {
-    // Resume context if suspended (browser autoplay policy)
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
     const oscillator = audioCtx.createOscillator();
@@ -128,60 +132,118 @@ function playBeep() {
     oscillator.stop(audioCtx.currentTime + 0.5);
 }
 
-function addLogEntry(text, type) {
+function selectTarget(id) {
+    // Toggle selection
+    if (selectedTargetId === id) {
+        selectedTargetId = null; // Deselect
+    } else {
+        selectedTargetId = id;
+    }
+
+    // Update Visuals for Cards
+    document.querySelectorAll('.ping-card').forEach(card => {
+        if (card.id === `card-${selectedTargetId}`) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    });
+
+    // Toggle Log Visibility and Title
+    if (selectedTargetId) {
+        activityLogEl.classList.add('visible');
+        const target = targets.find(t => t.id === selectedTargetId);
+        const title = activityLogEl.querySelector('h3');
+        if (title && target) title.innerText = `Log de Actividad: ${target.name}`;
+    } else {
+        activityLogEl.classList.remove('visible');
+    }
+
+    filterLogs();
+}
+
+function filterLogs() {
+    if (!logEntriesEl) return;
+    const entries = logEntriesEl.children;
+    for (let entry of entries) {
+        if (!selectedTargetId) {
+            // Technically hidden container, but if we were showing all...
+            // In this specific requirement, we only show WHEN selected.
+            // But if we ever show all, this ensures they are block.
+            entry.style.display = 'block';
+        } else {
+            const entryTargetId = entry.getAttribute('data-target-id');
+            if (entryTargetId === selectedTargetId) {
+                entry.style.display = 'block';
+            } else {
+                entry.style.display = 'none';
+            }
+        }
+    }
+}
+
+function addLogEntry(text, type, targetId = null) {
     if (!logEntriesEl) return;
 
-    // Clear initial "waiting" message if present
+    // Clear initial waiting message
     if (logEntriesEl.querySelector('.log-entry') && logEntriesEl.children[0].innerText === 'Waiting for events...') {
         logEntriesEl.innerHTML = '';
     }
 
     const div = document.createElement('div');
     div.className = `log-entry ${type}`;
+    if (targetId) div.setAttribute('data-target-id', targetId);
+
     const time = new Date().toLocaleTimeString();
     div.innerText = `[${time}] ${text}`;
     logEntriesEl.prepend(div);
+
+    // Apply visibility immediately based on selection
+    if (selectedTargetId && targetId && targetId !== selectedTargetId) {
+        div.style.display = 'none';
+    } else {
+        div.style.display = 'block';
+    }
 
     if (logEntriesEl.children.length > 50) {
         logEntriesEl.lastElementChild.remove();
     }
 }
 
+// Make selectTarget available globally if needed for onclick attributes (though we attach via JS now)
+window.selectTarget = selectTarget;
+
 window.pingApp.onPingResult((result) => {
     const { id, alive, time } = result;
     const statusEl = document.getElementById(`status-${id}`);
     const latencyEl = document.getElementById(`latency-${id}`);
     const barEl = document.getElementById(`bar-${id}`);
+    const cardEl = document.getElementById(`card-${id}`);
+
+    // Ensure click handler is attached (safeguard)
+    if (cardEl && !cardEl.onclick) {
+        cardEl.onclick = () => selectTarget(id);
+    }
 
     const target = targets.find(t => t.id === id);
     const targetName = target ? target.name : id;
 
     // Check for state change
-    // Using strict checking against cache
     if (prevStatuses[id] !== undefined) {
-        // UP -> DOWN (alive went from true to false)
         if (prevStatuses[id] === true && !alive) {
-            console.log('Target DOWN detected:', targetName); // Debug
             playBeep();
-
-            // Try Notification
             if (Notification.permission === 'granted' || Notification.permission === 'default') {
                 new Notification('Connection Lost', { body: `${targetName} is DOWN` });
             }
-
-            addLogEntry(`${targetName} is DOWN!`, 'down');
+            addLogEntry(`${targetName} is DOWN!`, 'down', id);
         }
-        // DOWN -> UP (alive went from false to true)
         else if (prevStatuses[id] === false && alive) {
-            addLogEntry(`${targetName} reconnected.`, 'up');
+            addLogEntry(`${targetName} reconnected.`, 'up', id);
         }
     } else {
-        // Initial state
         prevStatuses[id] = alive;
-        // Optional: log initial state? No, too spammy.
     }
 
-    // Update state cache ALWAYS
     prevStatuses[id] = alive;
 
     if (statusEl && latencyEl) {

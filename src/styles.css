@@ -176,14 +176,20 @@ button.add-btn:hover {
 }
 
 /* Activity Log */
+/* Activity Log */
 .activity-log {
     height: 200px;
     background: #191919;
     border-top: 1px solid #333;
     padding: 15px;
     overflow-y: hidden;
-    display: flex;
+    display: none;
+    /* Hidden by default */
     flex-direction: column;
+}
+
+.activity-log.visible {
+    display: flex;
 }
 
 .activity-log h3 {
@@ -248,6 +254,13 @@ button.add-btn:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0, 229, 255, 0.1);
     border-color: var(--accent-color);
+    cursor: pointer;
+}
+
+.ping-card.selected {
+    border-color: var(--success-color);
+    box-shadow: 0 0 15px rgba(0, 255, 157, 0.3);
+    background: #252520;
 }
 
 .card-header {
