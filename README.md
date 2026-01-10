@@ -1,46 +1,68 @@
 # ProPing Monitor
 
-Una aplicación de escritorio moderna construida con Electron para monitorear el estado (ping) de múltiples direcciones IP en tiempo real.
+**ProPing Monitor** is a modern, dark-themed network monitoring application built with Electron. It allows you to monitor the status (UP/DOWN) of multiple network targets (IP addresses or domains) in real-time, providing visual and email alerts when a target goes offline.
 
-## Características
+![ProPing Monitor UI](https://via.placeholder.com/800x500?text=ProPing+Monitor+Screenshot)
 
-- 📡 **Monitoreo en Tiempo Real**: Ping constante a múltiples objetivos.
-- 🎨 **Diseño Premium**: Interfaz oscura con efectos glassmorphism.
-- 💾 **Persistencia**: Las configuraciones se guardan automáticamente en `C:\ProgramData\ElectronPingApp\config.json`.
-- 🔔 **Alertas**: Notificaciones de sistema y sonido cuando una IP deja de responder.
-- 📊 **Dashboard Dinámico**: Visualización clara del estado y latencia.
+## 🚀 Features
 
-## Requisitos
+*   **Real-time Monitoring:** Pings multiple targets concurrently every 2 seconds.
+*   **Visual Dashboard:** Clean, dark-mode interface with cards for each target.
+    *   **Green Dot:** Target is Online.
+    *   **Red Dot & Glow:** Target is Offline (Timeout).
+*   **Email Alerts (SMTP):** Automatically sends an email notification when a target goes down.
+    *   Supports Gmail, Outlook, and custom SMTP servers.
+    *   **Secure Storage:** SMTP passwords are encrypted using the OS Keychain (Windows Credential Manager) via Electron's `safeStorage`.
+*   **Sound Alerts:** Plays a subtle notification sound on status change.
+*   **Persistence:** Targets and SMTP settings are automatically saved and restored on restart (`C:\ProgramData\ElectronPingApp`).
+*   **Activity Log:** (Optional) View recent ping history.
 
-- [Node.js](https://nodejs.org/) (Versión LTS recomendada)
-- Windows (Probado en Windows 10/11)
+## 🛠️ Installation
 
-## Instalación
+1.  **Clone the repository** (or download source):
+    ```bash
+    git clone <repository-url>
+    cd electron-ping-app
+    ```
 
-1.  Clonar o descargar este repositorio.
-2.  Abrir una terminal en la carpeta del proyecto.
-3.  Instalar las dependencias:
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
 
-```bash
-npm install
-```
+3.  **Start the application**:
+    ```bash
+    npm start
+    ```
 
-## Uso
+## ⚙️ Configuration
 
-Para iniciar la aplicación en modo desarrollo:
+### Adding Targets
+1.  Enter a **Name** (e.g., "Main Router") and **IP/Host** (e.g., `192.168.1.1`).
+2.  Click **ADD TARGET**.
 
-```bash
-npm start
-```
+### Setting up Email Alerts (Gmail Example)
+1.  Click the **⚙️ SMTP Settings** button in the sidebar.
+2.  **Host**: `smtp.gmail.com`
+3.  **Port**: `465`
+4.  **Secure**: Check the box ✅.
+5.  **User**: Your Gmail address.
+6.  **Password**: **IMPORTANT:** Use an **App Password**, not your login password.
+    *   Go to [Google Account > Security > 2-Step Verification > App Passwords](https://myaccount.google.com/apppasswords).
+    *   Generate a password specifically for this app.
+7.  **From/To**: Set the sender and recipient email addresses.
+8.  Click **Test Connection** to verify, then **Save Configuration**.
 
-## Configuración
+> **Note:** Your password is encrypted securely using Windows Credential Manager. It is NOT stored in plain text.
 
-- **Agregar Host**: Ingresa el nombre y la IP en el menú lateral y haz clic en "ADD TARGET".
-- **Eliminar Host**: Haz clic en la "X" roja en la lista de objetivos.
-- **Ocultar Menú**: Usa el botón `☰` en la esquina superior izquierda.
+## 💻 Tech Stack
 
-## Estructura del Proyecto
+*   **Electron:** Desktop runtime.
+*   **Node.js:** Backend logic.
+*   **Nodemailer:** Email sending.
+*   **Ping:** Network connectivity testing.
+*   **Tailored CSS:** Custom dark theme (no heavy frameworks).
 
-- `src/main.js`: Proceso principal (Backend), maneja los pings y el sistema de archivos.
-- `src/renderer.js`: Lógica de la interfaz (Frontend).
-- `src/styles.css`: Estilos de la aplicación.
+## 📄 License
+
+MIT License
