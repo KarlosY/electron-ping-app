@@ -2,7 +2,7 @@
 
 **ProPing Monitor** is a modern, dark-themed network monitoring application built with Electron. It allows you to monitor the status (UP/DOWN) of multiple network targets (IP addresses or domains) in real-time, providing visual and email alerts when a target goes offline.
 
-![ProPing Monitor UI](src\assets\ping-ui.png)
+![ProPing Monitor UI](src/assets/ping-ui.png)
 
 ## 🚀 Features
 
