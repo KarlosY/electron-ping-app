@@ -31,8 +31,9 @@
       "perMachine": false
     }
   },
-  "license": "ISC",
   "dependencies": {
+    "electron-squirrel-startup": "^1.0.1",
+    "nodemailer": "^7.0.12",
     "ping": "^0.4.4"
   },
   "devDependencies": {

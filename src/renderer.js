@@ -213,6 +213,99 @@ function addLogEntry(text, type, targetId = null) {
 // Make selectTarget available globally if needed for onclick attributes (though we attach via JS now)
 window.selectTarget = selectTarget;
 
+// SMTP Modal Logic
+const smtpModal = document.getElementById('smtpModal');
+const settingsBtn = document.getElementById('settingsBtn');
+const closeModal = document.getElementById('closeModal');
+const saveSmtpBtn = document.getElementById('saveSmtpBtn');
+const testSmtpBtn = document.getElementById('testSmtpBtn');
+const smtpStatus = document.getElementById('smtpStatus');
+
+// Inputs
+const smtpHost = document.getElementById('smtpHost');
+const smtpPort = document.getElementById('smtpPort');
+const smtpSecure = document.getElementById('smtpSecure');
+const smtpUser = document.getElementById('smtpUser');
+const smtpPass = document.getElementById('smtpPass');
+const smtpFrom = document.getElementById('smtpFrom');
+const smtpTo = document.getElementById('smtpTo');
+
+settingsBtn.addEventListener('click', async () => {
+    smtpModal.classList.add('visible');
+    // Load existing config
+    const config = await window.pingApp.getSmtpConfig();
+    if (config) {
+        smtpHost.value = config.host || '';
+        smtpPort.value = config.port || '';
+        smtpSecure.checked = config.secure || false;
+        smtpUser.value = config.user || '';
+        smtpPass.value = config.pass || '';
+        smtpFrom.value = config.from || '';
+        smtpTo.value = config.to || '';
+    }
+});
+
+closeModal.addEventListener('click', () => {
+    smtpModal.classList.remove('visible');
+    smtpStatus.innerText = '';
+});
+
+// Close on outside click
+window.onclick = (event) => {
+    if (event.target == smtpModal) {
+        smtpModal.classList.remove('visible');
+        smtpStatus.innerText = '';
+    }
+}
+
+function getSmtpForm() {
+    return {
+        host: smtpHost.value.trim(),
+        port: parseInt(smtpPort.value.trim()),
+        secure: smtpSecure.checked,
+        user: smtpUser.value.trim(),
+        pass: smtpPass.value.trim(),
+        from: smtpFrom.value.trim(),
+        to: smtpTo.value.trim()
+    };
+}
+
+saveSmtpBtn.addEventListener('click', async () => {
+    const config = getSmtpForm();
+    if (!config.host || !config.user || !config.pass) {
+        smtpStatus.innerText = 'Please fill required fields (Host, User, Pass)';
+        smtpStatus.style.color = 'var(--error-color)';
+        return;
+    }
+
+    const res = await window.pingApp.saveSmtpConfig(config);
+    if (res.success) {
+        smtpStatus.innerText = 'Configuration Saved!';
+        smtpStatus.style.color = 'var(--success-color)';
+        setTimeout(() => smtpModal.classList.remove('visible'), 1500);
+    } else {
+        smtpStatus.innerText = 'Error saving: ' + res.error;
+        smtpStatus.style.color = 'var(--error-color)';
+    }
+});
+
+testSmtpBtn.addEventListener('click', async () => {
+    const config = getSmtpForm();
+    smtpStatus.innerText = 'Sending test email...';
+    smtpStatus.style.color = '#fff';
+
+    const res = await window.pingApp.sendTestEmail(config);
+    if (res.success) {
+        smtpStatus.innerText = 'Test Email Sent successfully!';
+        smtpStatus.style.color = 'var(--success-color)';
+    } else {
+        smtpStatus.innerText = 'Error sending: ' + res.error;
+        smtpStatus.style.color = 'var(--error-color)';
+    }
+});
+
+// Log entries helper (Modified to existing code, no changes needed here but preserving logic flow)
+
 window.pingApp.onPingResult((result) => {
     const { id, alive, time } = result;
     const statusEl = document.getElementById(`status-${id}`);
@@ -236,6 +329,13 @@ window.pingApp.onPingResult((result) => {
                 new Notification('Connection Lost', { body: `${targetName} is DOWN` });
             }
             addLogEntry(`${targetName} is DOWN!`, 'down', id);
+
+            // TRIGGER EMAIL ALERT
+            window.pingApp.sendAlertEmail({
+                targetName: targetName,
+                ip: target.ip,
+                time: new Date().toISOString()
+            });
         }
         else if (prevStatuses[id] === false && alive) {
             addLogEntry(`${targetName} reconnected.`, 'up', id);
