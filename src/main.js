@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, safeStorage } = require('electron');
 const path = require('path');
 const ping = require('ping');
 const fs = require('fs');
@@ -48,11 +48,23 @@ function saveTargets(targets) {
 }
 
 // Load SMTP Config
+// Load SMTP Config
 function loadSmtpConfig() {
     if (fs.existsSync(SMTP_CONFIG_FILE)) {
         try {
             const data = fs.readFileSync(SMTP_CONFIG_FILE, 'utf-8');
-            return JSON.parse(data);
+            const config = JSON.parse(data);
+
+            // Decrypt password if it exists and encryption is available
+            if (config && config.pass && safeStorage.isEncryptionAvailable()) {
+                try {
+                    const buffer = Buffer.from(config.pass, 'hex');
+                    config.pass = safeStorage.decryptString(buffer);
+                } catch (error) {
+                    // If decryption fails, it might be legacy plain text. Keep as is.
+                }
+            }
+            return config;
         } catch (e) {
             console.error("Error reading SMTP config:", e);
             return null;
@@ -63,6 +75,12 @@ function loadSmtpConfig() {
 
 function saveSmtpConfig(config) {
     try {
+        // Encrypt password before saving
+        if (config.pass && safeStorage.isEncryptionAvailable()) {
+            const encryptedBuffer = safeStorage.encryptString(config.pass);
+            config.pass = encryptedBuffer.toString('hex');
+        }
+
         fs.writeFileSync(SMTP_CONFIG_FILE, JSON.stringify(config, null, 2));
         return { success: true };
     } catch (e) {
